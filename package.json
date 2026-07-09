@@ -9,11 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-email/components": "^1.0.12",
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "mongoose": "^8.19.1",
     "next": "14.2.35",
-    "next-auth": "^4.24.11",
+    "next-auth": "^4.24.14",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-email": "^6.6.8",

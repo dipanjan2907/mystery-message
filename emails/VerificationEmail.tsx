@@ -49,6 +49,9 @@ export default function VerificationEmail({
           <Text>{otp}</Text>
         </Row>
         <Row>
+          <Text>This code expires in 1 hour.</Text>
+        </Row>
+        <Row>
           <Text>
             If you did not request this code, please ignore this email
           </Text>

@@ -36,7 +36,9 @@ export async function POST(request: Request) {
         const hashedPassword = await bcrypt.hash(password, 10);
         existingUserByEmail.password = hashedPassword;
         existingUserByEmail.verifyCode = verifyCode;
-        existingUserByEmail.verifyCodeExpiry = new Date(Date.now() + 36000);
+        const ONE_MINUTE = 60 * 1000;
+        const ONE_HOUR = 60 * ONE_MINUTE;
+        existingUserByEmail.verifyCodeExpiry = new Date(Date.now() + ONE_HOUR);
         await existingUserByEmail.save();
       }
     } else {
