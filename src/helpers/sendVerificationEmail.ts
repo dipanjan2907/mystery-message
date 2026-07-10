@@ -1,4 +1,4 @@
-import { resend } from "@/lib/resend";
+import { getResendClient } from "@/lib/resend";
 import "dotenv/config";
 import VerificationEmail from "../../emails/VerificationEmail";
 import { ApiResponse } from "@/types/ApiResponse";
@@ -9,6 +9,7 @@ export async function sendVerificationEmail(
   verifyCode: string,
 ): Promise<ApiResponse> {
   try {
+    const resend = getResendClient();
     await resend.emails.send({
       from: "onboarding@resend.dev",
       to: email,
