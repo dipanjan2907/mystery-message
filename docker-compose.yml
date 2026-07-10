@@ -1,20 +1,26 @@
 services:
+  mongo:
+    image: mongo:8
+    container_name: mongo
+    ports:
+      - "27017:27017"
+
   web:
     build:
       context: .
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    depends_on:
+      - mongo
     environment:
-      - PORT=3000
-      - MONGO_URI=${MONGO_URI}
-      - RESEND_API_KEY=${RESEND_API_KEY}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-      - GROQ_API_KEY=${GROQ_API_KEY}
+      PORT: 3000
+      MONGO_URI: mongodb://mongo:27017/mysteryMessage
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      GROQ_API_KEY: ${GROQ_API_KEY}
     networks:
-      - mystertMessage
-    restart: always
+      - mysteryMessage
 
 networks:
-  mystertMessage:
-    driver: bridge
+  mysteryMessage:
