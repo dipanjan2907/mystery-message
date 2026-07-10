@@ -4,21 +4,32 @@ services:
     container_name: mongo
     ports:
       - "27017:27017"
+    networks:
+      - mysteryMessage
 
   web:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        GROQ_API_KEY: ${GROQ_API_KEY}
+        RESEND_API_KEY: ${RESEND_API_KEY}
+        NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+        MONGO_URI: mongodb://mongo:27017/mysteryMessage
+
     ports:
       - "3000:3000"
+
     depends_on:
       - mongo
+
     environment:
       PORT: 3000
       MONGO_URI: mongodb://mongo:27017/mysteryMessage
+      GROQ_API_KEY: ${GROQ_API_KEY}
       RESEND_API_KEY: ${RESEND_API_KEY}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
-      GROQ_API_KEY: ${GROQ_API_KEY}
+
     networks:
       - mysteryMessage
 
