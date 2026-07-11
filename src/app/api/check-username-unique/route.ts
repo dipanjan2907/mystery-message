@@ -9,8 +9,8 @@ const UsernameQuerySchema = z.object({
 });
 
 export async function GET(request: Request) {
-  await dbConnect();
   try {
+    await dbConnect();
     const { searchParams } = new URL(request.url);
     const queryParam = { username: searchParams.get("username") };
     const result = UsernameQuerySchema.safeParse(queryParam);
@@ -36,6 +36,7 @@ export async function GET(request: Request) {
         {
           success: false,
           message: "Username is already taken",
+          isAcceptingMessage: existingVerifiedUser.isAcceptingMessage,
         },
         { status: 400 },
       );
