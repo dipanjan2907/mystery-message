@@ -1,12 +1,13 @@
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import { getGroq } from "@/lib/groq";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
-import { redis } from "@/lib/redis";
-export const runtime = "nodejs";
+import { getRedis } from "@/lib/redis";
 export async function POST(req: Request) {
+  const redis = getRedis();
   const forwarded = req.headers.get("x-forwarded-for");
   const ip =
     req.headers.get("x-real-ip") ??

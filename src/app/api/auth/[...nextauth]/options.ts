@@ -1,10 +1,12 @@
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/user.model";
 import { signInSchema } from "@/schemas/signInSchema";
-import { redis } from "@/lib/redis";
+import { getRedis } from "@/lib/redis";
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -17,6 +19,7 @@ export const authOptions: NextAuthOptions = {
 
       async authorize(credentials: any, req): Promise<any> {
         try {
+          const redis = getRedis();
           // Get client IP
           const forwarded = req?.headers?.["x-forwarded-for"];
           const ip =

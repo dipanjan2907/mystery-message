@@ -1,9 +1,11 @@
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/user.model";
 import { verifySchema } from "@/schemas/verifySchema";
-import { redis } from "@/lib/redis";
+import { getRedis } from "@/lib/redis";
 export async function POST(request: Request) {
+  const redis = getRedis();
   const forwarded = request.headers.get("x-forwarded-for");
   const ip =
     request.headers.get("x-real-ip") ??
