@@ -1,11 +1,45 @@
 export const dynamic = "force-dynamic";
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/user.model";
-
+import { verifySchema } from "@/schemas/verifySchema";
+import { redis } from "@/lib/redis";
 export async function POST(request: Request) {
-  await dbConnect();
+  const forwarded = request.headers.get("x-forwarded-for");
+  const ip =
+    request.headers.get("x-real-ip") ??
+    (forwarded ? forwarded.split(",")[0].trim() : "unknown");
   try {
-    const { username, code } = await request.json();
+    const key = `verify:${ip}`;
+    const requests = await redis.incr(key);
+
+    if (requests === 1) {
+      await redis.expire(key, 900);
+    }
+
+    if (requests > 5) {
+      return Response.json(
+        {
+          success: false,
+          message: "Too many requests. Please try again later.",
+        },
+        { status: 429 },
+      );
+    }
+    await dbConnect();
+    const body = await request.json();
+
+    const result = verifySchema.safeParse(body);
+
+    if (!result.success) {
+      return Response.json(
+        {
+          success: false,
+          message: "Invalid input.",
+        },
+        { status: 400 },
+      );
+    }
+    const { username, code } = result.data;
     const decodedUsername = decodeURIComponent(username);
     const user = await UserModel.findOne({ username: decodedUsername });
     if (!user) {

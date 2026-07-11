@@ -6,7 +6,6 @@ import UserModel from "@/model/user.model";
 import mongoose from "mongoose";
 
 export async function GET(request: Request) {
-  await dbConnect();
   const session = await getServerSession(authOptions);
   const user = session?.user;
   if (!session || !user) {
@@ -18,10 +17,16 @@ export async function GET(request: Request) {
 
   const userId = new mongoose.Types.ObjectId(user._id);
   try {
+    await dbConnect();
     //Aggregation Pipeline
     const user = await UserModel.aggregate([
-      { $match: { id: userId } },
-      { $unwind: "$messages" },
+      { $match: { _id: userId } },
+      {
+        $unwind: {
+          path: "$messages",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
       { $sort: { "messages.createdAt": -1 } },
       { $group: { _id: "$_id", messages: { $push: "$messages" } } },
     ]);
@@ -38,7 +43,7 @@ export async function GET(request: Request) {
       { status: 200 },
     );
   } catch (err) {
-    console.log("An unexpected error occured: ", err);
+    console.error("An unexpected error occured: ", err);
     return Response.json(
       { success: false, message: "could not fetch messages" },
       { status: 500 },

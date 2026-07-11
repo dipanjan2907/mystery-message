@@ -1,14 +1,51 @@
 export const dynamic = "force-dynamic";
 import dbConnect from "@/lib/dbConnect";
+import { signUpSchema } from "@/schemas/signUpSchema";
 import UserModel from "@/model/user.model";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { sendVerificationEmail } from "@/helpers/sendVerificationEmail";
+import { redis } from "@/lib/redis";
 
 export async function POST(request: Request) {
-  await dbConnect();
+  const forwarded = request.headers.get("x-forwarded-for");
+  const ip =
+    request.headers.get("x-real-ip") ??
+    (forwarded ? forwarded.split(",")[0].trim() : "unknown");
 
   try {
-    const { username, email, password } = await request.json();
+    const key = `signup:${ip}`;
+    const requests = await redis.incr(key);
+
+    if (requests === 1) {
+      await redis.expire(key, 60); // 60-second window
+    }
+
+    if (requests > 5) {
+      return Response.json(
+        {
+          success: false,
+          message: "Too many requests. Please try again later.",
+        },
+        { status: 429 },
+      );
+    }
+
+    await dbConnect();
+    const body = await request.json();
+    const result = signUpSchema.safeParse(body);
+
+    if (!result.success) {
+      return Response.json(
+        {
+          success: false,
+          message: "Invalid input.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const { username, email, password } = result.data;
     const existingUserVerifiedByUsername = await UserModel.findOne({
       username,
       isVerified: true,
@@ -25,7 +62,7 @@ export async function POST(request: Request) {
     }
 
     const existingUserByEmail = await UserModel.findOne({ email });
-    const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verifyCode = crypto.randomInt(100000, 1000000).toString();
 
     if (existingUserByEmail) {
       if (existingUserByEmail.isVerified) {
@@ -71,7 +108,7 @@ export async function POST(request: Request) {
       return Response.json(
         {
           success: false,
-          message: emailResponse.message,
+          message: "Failed to send verification email",
         },
         { status: 500 },
       );

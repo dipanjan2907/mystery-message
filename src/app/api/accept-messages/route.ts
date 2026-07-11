@@ -3,9 +3,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/options";
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/user.model";
+import { acceptMessageSchema } from "@/schemas/acceptMessageSchema";
 
 export async function POST(request: Request) {
-  await dbConnect();
   const session = await getServerSession(authOptions);
   const user = session?.user;
   if (!session || !user) {
@@ -16,9 +16,24 @@ export async function POST(request: Request) {
   }
 
   const userId = user._id;
-  const { acceptMessages } = await request.json();
+  const body = await request.json();
+
+  const result = acceptMessageSchema.safeParse(body);
+
+  if (!result.success) {
+    return Response.json(
+      {
+        success: false,
+        message: "Invalid input.",
+      },
+      { status: 400 },
+    );
+  }
+
+  const { acceptMessages } = result.data;
 
   try {
+    await dbConnect();
     const updatedUser = await UserModel.findByIdAndUpdate(
       userId,
       { isAcceptingMessage: acceptMessages },
@@ -40,13 +55,13 @@ export async function POST(request: Request) {
       {
         success: true,
         message: "Message acceptance status updated successfully",
-        updatedUser,
       },
       {
         status: 200,
       },
     );
   } catch (err) {
+    console.error("Error updating message acceptance status:", err);
     return Response.json(
       {
         success: false,
@@ -59,7 +74,6 @@ export async function POST(request: Request) {
   }
 }
 export async function GET(request: Request) {
-  await dbConnect();
   const session = await getServerSession(authOptions);
   const user = session?.user;
   if (!session || !user) {
@@ -71,6 +85,7 @@ export async function GET(request: Request) {
 
   const userId = user?._id;
   try {
+    await dbConnect();
     const foundUser = await UserModel.findById(userId);
     if (!foundUser) {
       return Response.json(
